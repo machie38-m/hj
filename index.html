@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Z Shop - Toko Topi Terlengkap</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="logo" onclick="showSection('home')">Z Shop</div>
+            <div class="search-bar">
+                <input type="text" id="search-input" placeholder="Cari topi... / Search hats...">
+                <button onclick="searchProducts()"><i class="fas fa-search"></i></button>
+            </div>
+            <div class="nav-links">
+                <div class="nav-item" onclick="showSection('home')">
+                    <i class="fas fa-home"></i>
+                    <span>Beranda / Home</span>
+                </div>
+                <div class="nav-item" onclick="showSection('history')">
+                    <i class="fas fa-history"></i>
+                    <span>Pesanan / Orders</span>
+                </div>
+                <div class="nav-item" onclick="showSection('cart')">
+                    <div class="cart-icon-container">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span id="cart-count">0</span>
+                    </div>
+                    <span>Keranjang / Cart</span>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main id="main-content">
+        <!-- Sections will be injected here by JavaScript -->
+    </main>
+
+    <div id="whatsapp-float">
+        <a href="https://wa.me/6288973262022" target="_blank" title="Chat WhatsApp">
+            <i class="fab fa-whatsapp"></i>
+        </a>
+    </div>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>Kontak Kami / Contact Us</h3>
+                <p>Email: machie 8910@gmail.com</p>
+                <p>WhatsApp: <a href="https://wa.me/6288973262022" style="color: white;">+6288973262022</a></p>
+            </div>
+            <div class="footer-section">
+                <h3>Metode Pembayaran / Payment Methods</h3>
+                <p>COD, ShopeePay, SeaBank</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 kelompok 6. Semua hak dilindungi</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
