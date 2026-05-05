@@ -101,6 +101,7 @@ const products = [
 // State Management
 let cart = JSON.parse(localStorage.getItem('zshop_cart')) || [];
 let activePromo = null;
+let currentProductDetail = null;
 
 // Promo Codes
 const promos = {
@@ -115,7 +116,7 @@ function formatRupiah(amount) {
 }
 
 // Navigation
-function showSection(sectionId) {
+function showSection(sectionId, param = null) {
     const main = document.getElementById('main-content');
     window.scrollTo(0, 0);
 
@@ -125,28 +126,27 @@ function showSection(sectionId) {
         renderCart();
     } else if (sectionId === 'checkout') {
         renderCheckout();
+    } else if (sectionId === 'product-detail') {
+        renderProductDetail(param);
     }
 }
 
 // Core Functions
-function addToCart(productId, buyNow = false) {
+function addToCart(productId, quantity = 1, buyNow = false) {
     const product = products.find(p => p.id === productId);
     const existingItem = cart.find(item => item.id === productId);
 
     if (existingItem) {
-        existingItem.quantity += 1;
+        existingItem.quantity += quantity;
     } else {
-        cart.push({ ...product, quantity: 1 });
+        cart.push({ ...product, quantity: quantity });
     }
 
     saveCart();
     updateCartCount();
 
     if (buyNow) {
-        // Filter cart to only include THIS item for a true "Buy Now" feel,
-        // OR just proceed to checkout with current cart.
-        // User said "beli sekarang" - typically this means just this item.
-        cart = [{ ...product, quantity: 1 }];
+        cart = [{ ...product, quantity: quantity }];
         saveCart();
         updateCartCount();
         showSection('checkout');
@@ -208,27 +208,42 @@ function applyPromo() {
 // Render Logic
 function renderHome(filteredProducts = products) {
     const main = document.getElementById('main-content');
+
+    window.homeQtys = window.homeQtys || {};
+    filteredProducts.forEach(p => {
+        if (window.homeQtys[p.id] === undefined) {
+            window.homeQtys[p.id] = 1;
+        }
+    });
+
     main.innerHTML = `
         <section class="hero">
-            <h1>Z Shop</h1>
-            <p>Koleksi Topi Paling Keren & Trendi</p>
+            <h1>TKTM</h1>
+            <p>Topi Kita, Trend Mereka</p>
         </section>
         <section class="products-container">
             <div class="product-grid">
                 ${filteredProducts.map(p => `
-                    <div class="product-card">
+                    <div class="product-card" onclick="showSection('product-detail', ${p.id})">
                         <div class="product-image">
                             <img src="${p.image}" alt="${p.name}">
                         </div>
                         <div class="product-info">
                             <h3>${p.name}</h3>
                             <p class="product-price">${formatRupiah(p.price)}</p>
-                            <div class="product-actions">
-                                <button class="btn-secondary" onclick="addToCart(${p.id})">
+
+                            <div class="product-qty-home" onclick="event.stopPropagation()">
+                                <button onclick="updateHomeQty(${p.id}, -1)">-</button>
+                                <span id="home-qty-${p.id}">${window.homeQtys[p.id]}</span>
+                                <button onclick="updateHomeQty(${p.id}, 1)">+</button>
+                            </div>
+
+                            <div class="product-actions" onclick="event.stopPropagation()">
+                                <button class="btn-secondary" onclick="addHomeToCart(${p.id})">
                                     <i class="fas fa-cart-plus"></i> + Keranjang
                                 </button>
-                                <button class="btn-primary" onclick="addToCart(${p.id}, true)">
-                                    Beli Sekarang
+                                <button class="btn-primary" onclick="showSection('product-detail', ${p.id})">
+                                    Lihat Detail
                                 </button>
                             </div>
                         </div>
@@ -237,6 +252,67 @@ function renderHome(filteredProducts = products) {
             </div>
         </section>
     `;
+
+    window.updateHomeQty = (pid, delta) => {
+        window.homeQtys[pid] = Math.max(1, window.homeQtys[pid] + delta);
+        const qtyEl = document.getElementById(`home-qty-${pid}`);
+        if (qtyEl) qtyEl.innerText = window.homeQtys[pid];
+    };
+
+    window.addHomeToCart = (pid) => {
+        addToCart(pid, window.homeQtys[pid]);
+    };
+}
+
+function renderProductDetail(productId) {
+    const product = products.find(p => p.id === productId);
+    const main = document.getElementById('main-content');
+
+    let tempQty = 1;
+
+    main.innerHTML = `
+        <div class="product-detail-page">
+            <button class="btn-back" onclick="showSection('home')"><i class="fas fa-arrow-left"></i> Kembali</button>
+            <div class="detail-container">
+                <div class="detail-image">
+                    <img src="${product.image}" alt="${product.name}">
+                </div>
+                <div class="detail-info">
+                    <h1>${product.name}</h1>
+                    <p class="detail-category">${product.category}</p>
+                    <p class="detail-price">${formatRupiah(product.price)}</p>
+                    <p class="detail-description">Kualitas premium dengan bahan pilihan yang nyaman digunakan sepanjang hari. Cocok untuk menunjang penampilan trendi Anda.</p>
+
+                    <div class="detail-quantity">
+                        <label>Jumlah:</label>
+                        <div class="qty-control">
+                            <button onclick="updateTempQty(-1)">-</button>
+                            <span id="temp-qty">1</span>
+                            <button onclick="updateTempQty(1)">+</button>
+                        </div>
+                    </div>
+
+                    <div class="detail-actions">
+                        <button class="btn-secondary" onclick="addCurrentToCart(${product.id})">
+                            <i class="fas fa-shopping-cart"></i> Tambah ke Keranjang
+                        </button>
+                        <button class="btn-primary" onclick="addCurrentToCart(${product.id}, true)">
+                            Beli Sekarang
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    window.updateTempQty = (delta) => {
+        tempQty = Math.max(1, tempQty + delta);
+        document.getElementById('temp-qty').innerText = tempQty;
+    };
+
+    window.addCurrentToCart = (pid, buyNow = false) => {
+        addToCart(pid, tempQty, buyNow);
+    };
 }
 
 function renderCart() {
@@ -299,15 +375,15 @@ function renderCheckout(formData = {name: '', address: '', phone: ''}) {
                 <h2>Detail Pengiriman</h2>
                 <div class="form-group">
                     <label>Nama Lengkap</label>
-                    <input type="text" id="name" placeholder="Masukkan nama lengkap" value="${formData.name}">
+                    <input type="text" id="name" placeholder="Masukkan nama lengkap">
                 </div>
                 <div class="form-group">
                     <label>Alamat Lengkap</label>
-                    <textarea id="address" rows="3" placeholder="Masukkan alamat lengkap pengiriman">${formData.address}</textarea>
+                    <textarea id="address" rows="3" placeholder="Masukkan alamat lengkap pengiriman"></textarea>
                 </div>
                 <div class="form-group">
                     <label>Nomor WhatsApp</label>
-                    <input type="tel" id="phone" placeholder="Contoh: 08123456789" value="${formData.phone}">
+                    <input type="tel" id="phone" placeholder="Contoh: 08123456789">
                 </div>
             </div>
             <div class="order-summary">
@@ -352,6 +428,11 @@ function renderCheckout(formData = {name: '', address: '', phone: ''}) {
             </div>
         </div>
     `;
+
+    // Set values safely to avoid XSS
+    document.getElementById('name').value = formData.name;
+    document.getElementById('address').value = formData.address;
+    document.getElementById('phone').value = formData.phone;
 }
 
 function processOrder(method) {
@@ -370,7 +451,7 @@ function processOrder(method) {
 
     let itemsText = cart.map(item => `- ${item.name} (x${item.quantity}): ${formatRupiah(item.price * item.quantity)}`).join('\n');
 
-    const message = `Halo Z Shop, saya ingin memesan:
+    const message = `Halo TKTM, saya ingin memesan:
 
 ${itemsText}
 
@@ -389,7 +470,7 @@ Terima kasih!`;
         const waUrl = `https://wa.me/6288973262022?text=${encodeURIComponent(message)}`;
         window.open(waUrl, '_blank');
     } else {
-        const mailUrl = `mailto:machie8910@gmail.com?subject=Pesanan Z Shop - ${name}&body=${encodeURIComponent(message)}`;
+        const mailUrl = `mailto:machie8910@gmail.com?subject=Pesanan TKTM - ${name}&body=${encodeURIComponent(message)}`;
         window.location.href = mailUrl;
     }
 
@@ -397,7 +478,7 @@ Terima kasih!`;
     cart = [];
     saveCart();
     updateCartCount();
-    alert('Pesanan Anda telah diteruskan. Silakan selesaikan pembayaran melalui platform yang dipilih.');
+    alert('Pesanan Anda telah diteruskan ke TKTM. Silakan selesaikan pembayaran melalui platform yang dipilih.');
     showSection('home');
 }
 
