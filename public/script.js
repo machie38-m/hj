@@ -13,7 +13,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const downloadBtn = document.getElementById('downloadBtn');
 
     let currentTab = 'image';
-    let history = JSON.parse(localStorage.getItem('un_history') || '[]');
+    let history = [];
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    async function fetchHistory() {
+        try {
+            const response = await fetch('/api/history');
+            history = await response.json();
+            renderGallery();
+        } catch (error) {
+            console.error('Failed to fetch history:', error);
+        }
+    }
 
     // Tab Switching
     tabBtns.forEach(btn => {
@@ -62,7 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (resultUrl) {
                 displayResult(resultUrl, currentTab, prompt);
-                saveToHistory(resultUrl, currentTab, prompt);
+                await saveToHistory(resultUrl, currentTab, prompt);
             }
         } catch (error) {
             console.error('Generation failed:', error);
@@ -199,7 +215,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 </video>
             `;
         } else {
-            mediaOutput.innerHTML = `<img src="${url}" alt="${prompt}">`;
+            const escapedPrompt = escapeHtml(prompt);
+            mediaOutput.innerHTML = `<img src="${url}" alt="${escapedPrompt}">`;
             if (type === 'video') {
                 mediaOutput.innerHTML += `<div class="video-sim-badge"><i class="fas fa-bolt"></i> High-Motion Preview</div>`;
             }
@@ -211,12 +228,20 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
-    function saveToHistory(url, type, prompt) {
-        const item = { url, type, prompt, id: Date.now() };
-        history.unshift(item);
-        if (history.length > 50) history.pop();
-        localStorage.setItem('un_history', JSON.stringify(history));
-        renderGallery();
+    async function saveToHistory(url, type, prompt) {
+        try {
+            const response = await fetch('/api/history', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url, type, prompt })
+            });
+            const newItem = await response.json();
+            history.unshift(newItem);
+            if (history.length > 50) history.pop();
+            renderGallery();
+        } catch (error) {
+            console.error('Failed to save history:', error);
+        }
     }
 
     function renderGallery() {
@@ -227,11 +252,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         galleryGrid.innerHTML = history.map(item => {
             const isRealVideo = item.url.includes('video') || item.url.endsWith('.mp4') || (item.type === 'video' && !item.url.includes('image.pollinations.ai'));
+            const escapedPrompt = escapeHtml(item.prompt);
 
             return `
                 <div class="gallery-item" onclick="viewHistoryItem(${item.id})">
                     ${!isRealVideo
-                        ? `<img src="${item.url}" alt="${item.prompt}">`
+                        ? `<img src="${item.url}" alt="${escapedPrompt}">`
                         : `<video muted loop playsinline onmouseover="this.play()" onmouseout="this.pause()"><source src="${item.url}" type="video/mp4"></video>`
                     }
                     <div class="media-type-badge">${item.type === 'video' ? '<i class="fas fa-video"></i>' : '<i class="fas fa-image"></i>'}</div>
@@ -254,11 +280,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    window.deleteHistoryItem = (e, id) => {
+    window.deleteHistoryItem = async (e, id) => {
         e.stopPropagation();
-        history = history.filter(h => h.id !== id);
-        localStorage.setItem('un_history', JSON.stringify(history));
-        renderGallery();
+        try {
+            await fetch(`/api/history/${id}`, { method: 'DELETE' });
+            history = history.filter(h => h.id !== id);
+            renderGallery();
+        } catch (error) {
+            console.error('Failed to delete history item:', error);
+        }
     };
 
     window.downloadHistoryItem = (e, url, type) => {
@@ -268,6 +298,9 @@ document.addEventListener('DOMContentLoaded', () => {
         downloadMedia(url, `un-ai-${Date.now()}.${ext}`);
     };
 
-    // Initial Render
-    renderGallery();
+    // Set Year
+    document.getElementById('currentYear').textContent = new Date().getFullYear();
+
+    // Initial Fetch
+    fetchHistory();
 });
