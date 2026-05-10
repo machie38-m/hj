@@ -21,13 +21,14 @@ document.addEventListener('DOMContentLoaded', () => {
         return div.innerHTML;
     }
 
-    async function fetchHistory() {
+    function fetchHistory() {
         try {
-            const response = await fetch('/api/history');
-            history = await response.json();
+            const savedHistory = localStorage.getItem('un_ai_history');
+            history = savedHistory ? JSON.parse(savedHistory) : [];
             renderGallery();
         } catch (error) {
             console.error('Failed to fetch history:', error);
+            history = [];
         }
     }
 
@@ -228,16 +229,18 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
-    async function saveToHistory(url, type, prompt) {
+    function saveToHistory(url, type, prompt) {
         try {
-            const response = await fetch('/api/history', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ url, type, prompt })
-            });
-            const newItem = await response.json();
+            const newItem = {
+                id: Date.now(),
+                url,
+                type,
+                prompt,
+                timestamp: new Date().toISOString()
+            };
             history.unshift(newItem);
             if (history.length > 50) history.pop();
+            localStorage.setItem('un_ai_history', JSON.stringify(history));
             renderGallery();
         } catch (error) {
             console.error('Failed to save history:', error);
@@ -280,11 +283,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    window.deleteHistoryItem = async (e, id) => {
+    window.deleteHistoryItem = (e, id) => {
         e.stopPropagation();
         try {
-            await fetch(`/api/history/${id}`, { method: 'DELETE' });
             history = history.filter(h => h.id !== id);
+            localStorage.setItem('un_ai_history', JSON.stringify(history));
             renderGallery();
         } catch (error) {
             console.error('Failed to delete history item:', error);
