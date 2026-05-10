@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UN - Uncensored AI Generation</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="background-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <nav>
+        <div class="logo">UN<span>.ai</span></div>
+        <div class="nav-links">
+            <a href="#generate" class="active">Generate</a>
+            <a href="#gallery">Gallery</a>
+        </div>
+        <div class="uncensored-toggle-container">
+            <span>Uncensored Mode</span>
+            <label class="switch">
+                <input type="checkbox" id="uncensoredMode" checked>
+                <span class="slider round"></span>
+            </label>
+        </div>
+    </nav>
+
+    <main id="generate">
+        <header>
+            <h1>Unleash Your <span>Imagination</span></h1>
+            <p>Generate high-quality anime images and videos without restrictions.</p>
+        </header>
+
+        <section class="generator-container">
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="image"><i class="fas fa-image"></i> Image</button>
+                <button class="tab-btn" data-tab="video"><i class="fas fa-video"></i> Video</button>
+            </div>
+
+            <div class="prompt-section">
+                <textarea id="promptInput" placeholder="Describe what you want to see..."></textarea>
+                <div class="controls">
+                    <div class="control-group">
+                        <label>Model</label>
+                        <select id="modelSelect">
+                            <option value="flux">Flux (General Best)</option>
+                            <option value="flux-anime">Flux Anime</option>
+                            <option value="flux-realism">Flux Realism</option>
+                            <option value="any-dark">AnyDark (NSFW Optimized)</option>
+                            <option value="flux-3d">Flux 3D</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label>Aspect Ratio</label>
+                        <select id="aspectRatio">
+                            <option value="1:1">1:1 Square</option>
+                            <option value="16:9">16:9 Cinematic</option>
+                            <option value="9:16">9:16 Portrait</option>
+                        </select>
+                    </div>
+                    <button id="generateBtn">Generate <i class="fas fa-magic"></i></button>
+                </div>
+            </div>
+
+            <div id="resultContainer" class="result-container hidden">
+                <div class="loader-container">
+                    <div class="loader"></div>
+                    <p>Creating your masterpiece...</p>
+                </div>
+                <div id="mediaOutput" class="media-output"></div>
+                <div class="output-actions">
+                    <button id="downloadBtn"><i class="fas fa-download"></i> Download</button>
+                    <button id="shareBtn"><i class="fas fa-share-alt"></i> Share</button>
+                </div>
+            </div>
+        </section>
+
+        <section id="gallery" class="gallery-section">
+            <h2>Your Creations</h2>
+            <div id="galleryGrid" class="gallery-grid">
+                <!-- Gallery items will be injected here -->
+                <p class="empty-msg">No creations yet. Start generating!</p>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; <span id="currentYear"></span> UN AI. All rights reserved.</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
